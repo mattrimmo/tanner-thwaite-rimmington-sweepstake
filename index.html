@@ -6,6 +6,31 @@
 <title>World Cup 2026 — Sweepstake</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+// Load Twemoji only on Android — renders flag emojis as SVG images
+// iOS/Mac have native flag support so we leave them untouched
+if(/android/i.test(navigator.userAgent)){
+  const s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js';
+  s.crossOrigin='anonymous';
+  s.onload=function(){
+    window._parseTwemoji=function(el){
+      twemoji.parse(el||document.body,{
+        folder:'svg',ext:'.svg',
+        base:'https://cdn.jsdelivr.net/npm/twemoji@14.0.2/assets/',
+        className:'twemoji-flag'
+      });
+    };
+    // Parse initial visible content (draw tab)
+    if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){window._parseTwemoji();});}
+    else{window._parseTwemoji();}
+  };
+  document.head.appendChild(s);
+  const style=document.createElement('style');
+  style.textContent='.twemoji-flag{width:1.2em;height:1.2em;vertical-align:-0.15em;display:inline-block;}';
+  document.head.appendChild(style);
+}
+</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -152,6 +177,57 @@ section.active{display:block}
   .owner-tag{display:block;margin-top:1px}
 }
 @media print{nav,.bottom-nav,section:not(.active){display:none}body{background:#fff;color:#111;padding-bottom:0}.hero{background:#1a4a2e!important;-webkit-print-color-adjust:exact}}
+
+/* ── LIVE SECTION ── */
+.live-match-card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);overflow:hidden;margin-bottom:12px}
+.live-match-card.is-live{border-color:rgba(239,68,68,0.5);box-shadow:0 0 0 1px rgba(239,68,68,0.15)}
+.live-match-card.is-finished{border-color:rgba(201,168,76,0.3)}
+.lmc-header{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:rgba(255,255,255,0.03);border-bottom:1px solid var(--border)}
+.lmc-status{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;display:flex;align-items:center;gap:5px}
+.lmc-status.live{color:#ef4444}.lmc-status.live::before{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:#ef4444;animation:pulse 1.2s infinite}
+.lmc-status.finished{color:var(--gold)}
+.lmc-status.upcoming{color:var(--muted2)}
+.lmc-round{font-size:10px;color:var(--muted);text-align:right}
+.lmc-ground{font-size:11px;color:var(--muted);text-align:right}
+
+/* sweepstake clash banner */
+.lmc-clash{background:linear-gradient(135deg,rgba(201,168,76,0.12),rgba(201,168,76,0.04));border-bottom:1px solid rgba(201,168,76,0.2);padding:8px 14px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:12px;font-weight:600;color:var(--gold)}
+.lmc-clash .clash-vs{font-size:10px;font-weight:400;color:var(--muted2);margin:0 2px}
+.lmc-no-clash{padding:6px 14px;font-size:11px;color:var(--muted);text-align:center;border-bottom:1px solid var(--border);font-style:italic}
+
+/* scoreboard */
+.lmc-score-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;padding:16px 14px}
+.lmc-team{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+.lmc-team.home{align-items:flex-end;text-align:right}
+.lmc-team.away{align-items:flex-start;text-align:left}
+.lmc-flag{font-size:28px;line-height:1}
+.lmc-team-name{font-size:13px;font-weight:600;color:var(--white)}
+.lmc-owner{font-size:11px;color:var(--gold);font-weight:500;margin-top:1px}
+.lmc-scorebox{display:flex;flex-direction:column;align-items:center;gap:4px}
+.lmc-score{font-family:'Bebas Neue',sans-serif;font-size:42px;letter-spacing:.02em;line-height:1;color:var(--white)}
+.lmc-score.live-score{color:#ef4444}
+.lmc-score.upcoming-score{font-size:24px;color:var(--muted);font-family:'Inter',sans-serif;font-weight:300}
+.lmc-ht{font-size:10px;color:var(--muted);letter-spacing:.04em}
+.lmc-kickoff{font-size:12px;color:var(--muted2);font-weight:500}
+.lmc-kickoff-local{font-size:10px;color:var(--muted);margin-top:2px}
+
+/* goal scorers */
+.lmc-goals{display:grid;grid-template-columns:1fr 1fr;gap:0;border-top:1px solid var(--border)}
+.lmc-goals-col{padding:8px 14px}
+.lmc-goals-col:first-child{border-right:1px solid var(--border)}
+.goal-item{font-size:11px;color:var(--muted2);padding:2px 0;display:flex;align-items:center;gap:4px}
+.goal-item::before{content:'⚽';font-size:10px}
+.goal-min{font-size:10px;color:var(--muted)}
+
+/* countdown */
+.lmc-countdown{text-align:center;padding:8px 14px 10px;border-top:1px solid var(--border);font-size:11px;color:var(--muted2)}
+.lmc-countdown span{font-weight:600;color:var(--white)}
+
+/* section dividers */
+.live-section-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:1.5rem 0 .75rem;display:flex;align-items:center;gap:8px}
+.live-section-label::after{content:'';flex:1;height:1px;background:var(--border)}
+.no-match-today{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:2rem;text-align:center;color:var(--muted2);font-size:13px}
+.no-match-today strong{display:block;font-size:16px;color:var(--white);margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -165,6 +241,7 @@ section.active{display:block}
 <nav>
   <span class="nav-brand">⚽ WC2026</span>
   <div class="nav-links">
+    <button class="nav-link" data-tab="live" onclick="showTab('live')">🔴 Live</button>
     <button class="nav-link active" data-tab="draw" onclick="showTab('draw')">The Draw</button>
     <button class="nav-link" data-tab="leaderboard" onclick="showTab('leaderboard')">Leaderboard</button>
     <button class="nav-link" data-tab="pots" onclick="showTab('pots')">Pots</button>
@@ -178,6 +255,9 @@ section.active{display:block}
 </nav>
 
 <div class="bottom-nav">
+  <button class="bottom-nav-item" data-tab="live" onclick="showTab('live')">
+    <span class="bn-icon">🔴</span><span class="bn-label">Live</span>
+  </button>
   <button class="bottom-nav-item active" data-tab="draw" onclick="showTab('draw')">
     <span class="bn-icon">🎟️</span><span class="bn-label">Draw</span>
   </button>
@@ -194,6 +274,12 @@ section.active{display:block}
     <span class="bn-icon">🏟️</span><span class="bn-label">Bracket</span>
   </button>
 </div>
+
+<section id="tab-live">
+  <div class="sec-title">Live &amp; Today</div>
+  <div class="sec-sub">Live scores, today's fixtures, and who's playing who in the sweepstake</div>
+  <div id="liveWrap"><div class="loading-wrap"><div class="spinner"></div>Loading…</div></div>
+</section>
 
 <section id="tab-draw" class="active">
   <div class="sec-title">The Draw</div>
@@ -286,12 +372,197 @@ async function fetchData(){
     if(!r.ok) throw new Error('fetch failed');
     WC_DATA=await r.json();
     document.getElementById('lastUpdated').textContent='Updated '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-    buildGroups(); buildLeaderboard(); buildBracket();
+    buildLive(); buildGroups(); buildLeaderboard(); buildBracket();
+    // Re-parse emojis on Android after dynamic content is injected
+    if(window._parseTwemoji) window._parseTwemoji();
     setTimeout(fetchData,3*60*1000);
   }catch(e){
     document.getElementById('lastUpdated').textContent='Data unavailable';
     buildFallback();
   }
+}
+
+// ── LIVE / TODAY SECTION ───────────────────────────────────────────────────
+function parseKickoffUTC(date, time){
+  // time format: "15:00 UTC-4" → parse to UTC ms
+  const [hhmm, tzRaw] = time.split(' ');
+  const [hh, mm] = hhmm.split(':').map(Number);
+  const offset = parseInt(tzRaw.replace('UTC',''), 10); // e.g. -4 means UTC = local + 4
+  // Start at midnight UTC of the match date, then add local kickoff time, then subtract offset
+  const d = new Date(date + 'T00:00:00Z');
+  // local_hour - offset = utc_hour; use setUTCMinutes to handle overflow naturally
+  d.setUTCHours(0, 0, 0, 0);
+  d.setUTCMinutes(hh * 60 + mm - offset * 60); // setUTCMinutes handles hour/day overflow
+  return d.getTime();
+}
+
+function matchStatus(m){
+  if(!m.time) return {state:'unknown'};
+  const kickoffUTC = parseKickoffUTC(m.date, m.time);
+  const nowUTC = Date.now();
+  const elapsed = (nowUTC - kickoffUTC) / 60000; // minutes since kickoff
+  if(m.score){
+    // Has a score - either finished or the API has updated it mid-game
+    // If kickoff was within last 115 min AND score exists, treat as live
+    if(elapsed >= 0 && elapsed < 115) return {state:'live', elapsed: Math.floor(elapsed)};
+    return {state:'finished'};
+  }
+  if(elapsed >= 0 && elapsed < 115) return {state:'live', elapsed: Math.floor(elapsed)};
+  if(elapsed < 0) return {state:'upcoming', kickoffUTC, minsAway: Math.ceil(-elapsed)};
+  return {state:'finished'}; // elapsed > 115, no score yet (API lag)
+}
+
+function formatKickoff(date, time){
+  const kickoffUTC = parseKickoffUTC(date, time);
+  return new Date(kickoffUTC).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',timeZoneName:'short'});
+}
+
+function getClash(t1, t2){
+  const o1 = getOwner(canon(t1));
+  const o2 = getOwner(canon(t2));
+  if(!o1 && !o2) return null;
+  if(o1 && o2 && o1 !== o2) return {type:'clash', p1:o1, p2:o2};
+  if(o1 && !o2) return {type:'single', p:o1, team:t1};
+  if(!o1 && o2) return {type:'single', p:o2, team:t2};
+  if(o1 === o2) return {type:'same', p:o1}; // shouldn't happen but just in case
+  return null;
+}
+
+function renderMatchCard(m, status){
+  const t1 = m.team1, t2 = m.team2;
+  const clash = getClash(t1, t2);
+  const sc = m.score;
+  const [g1, g2] = sc ? sc.ft : [null, null];
+  const ht = sc && sc.ht ? `HT: ${sc.ht[0]}–${sc.ht[1]}` : '';
+
+  // Status badge
+  let statusHtml, scoreHtml, cardClass='';
+  if(status.state === 'live'){
+    const min = Math.min(status.elapsed, 90);
+    statusHtml = `<span class="lmc-status live">${min}'</span>`;
+    scoreHtml = `<div class="lmc-score live-score">${g1 !== null ? g1 : 0}–${g2 !== null ? g2 : 0}</div>${ht?`<div class="lmc-ht">${ht}</div>`:''}`;
+    cardClass = 'is-live';
+  } else if(status.state === 'finished'){
+    statusHtml = `<span class="lmc-status finished">Full Time</span>`;
+    scoreHtml = `<div class="lmc-score">${g1}–${g2}</div>${ht?`<div class="lmc-ht">${ht}</div>`:''}`;
+    cardClass = 'is-finished';
+  } else {
+    const localTime = formatKickoff(m.date, m.time);
+    statusHtml = `<span class="lmc-status upcoming">Upcoming</span>`;
+    scoreHtml = `<div class="lmc-score upcoming-score">${localTime}</div>`;
+  }
+
+  // Clash banner
+  let clashHtml = '';
+  if(clash && clash.type === 'clash'){
+    clashHtml = `<div class="lmc-clash">⚔️ ${clash.p1} <span class="clash-vs">vs</span> ${clash.p2}</div>`;
+  } else if(clash && clash.type === 'single'){
+    clashHtml = `<div class="lmc-clash">🎟️ ${clash.p}'s team</div>`;
+  } else if(clash && clash.type === 'same'){
+    clashHtml = `<div class="lmc-clash">🎟️ Two of ${clash.p}'s teams</div>`;
+  } else {
+    clashHtml = `<div class="lmc-no-clash">No sweepstake teams in this match</div>`;
+  }
+
+  // Goal scorers
+  let goalsHtml = '';
+  if(sc && (m.goals1?.length || m.goals2?.length)){
+    const mkGoals = (goals) => (goals||[]).map(g=>`<div class="goal-item">${g.name} <span class="goal-min">${g.minute}'</span></div>`).join('') || '<div class="goal-item" style="opacity:.3">–</div>';
+    goalsHtml = `<div class="lmc-goals"><div class="lmc-goals-col">${mkGoals(m.goals1)}</div><div class="lmc-goals-col">${mkGoals(m.goals2)}</div></div>`;
+  }
+
+  // Countdown for upcoming
+  let countdownHtml = '';
+  if(status.state === 'upcoming' && status.minsAway < 1440){
+    const h = Math.floor(status.minsAway / 60), mins = status.minsAway % 60;
+    const str = h > 0 ? `<span>${h}h</span> <span>${mins}m</span>` : `<span>${mins}m</span>`;
+    countdownHtml = `<div class="lmc-countdown">Kicks off in ${str}</div>`;
+  }
+
+  const o1 = getOwner(canon(t1)), o2 = getOwner(canon(t2));
+
+  return `<div class="live-match-card ${cardClass}">
+    <div class="lmc-header">
+      ${statusHtml}
+      <div>
+        <div class="lmc-round">${m.round||''} · ${m.group||'Knockout'}</div>
+        <div class="lmc-ground">📍 ${m.ground||''}</div>
+      </div>
+    </div>
+    ${clashHtml}
+    <div class="lmc-score-row">
+      <div class="lmc-team home">
+        <div class="lmc-flag">${getFlag(canon(t1))}</div>
+        <div class="lmc-team-name">${t1}</div>
+        ${o1?`<div class="lmc-owner">${o1}</div>`:''}
+      </div>
+      <div class="lmc-scorebox">${scoreHtml}</div>
+      <div class="lmc-team away">
+        <div class="lmc-flag">${getFlag(canon(t2))}</div>
+        <div class="lmc-team-name">${t2}</div>
+        ${o2?`<div class="lmc-owner">${o2}</div>`:''}
+      </div>
+    </div>
+    ${goalsHtml}
+    ${countdownHtml}
+  </div>`;
+}
+
+function buildLive(){
+  if(!WC_DATA) return;
+  const matches = WC_DATA.matches;
+  const now = Date.now();
+
+  // Classify every match
+  const withStatus = matches
+    .filter(m => m.date && m.time)
+    .map(m => ({m, status: matchStatus(m)}));
+
+  const liveMatches   = withStatus.filter(x => x.status.state === 'live');
+  const todayDate     = new Date().toISOString().split('T')[0];
+  const todayMatches  = withStatus.filter(x => x.m.date === todayDate);
+  const upcomingToday = todayMatches.filter(x => x.status.state === 'upcoming');
+  const finishedToday = todayMatches.filter(x => x.status.state === 'finished');
+
+  // Next upcoming match (if nothing today)
+  const allUpcoming = withStatus
+    .filter(x => x.status.state === 'upcoming')
+    .sort((a,b) => a.status.kickoffUTC - b.status.kickoffUTC);
+
+  let html = '';
+
+  if(liveMatches.length > 0){
+    html += `<div class="live-section-label">🔴 In Progress</div>`;
+    html += liveMatches.map(x => renderMatchCard(x.m, x.status)).join('');
+  }
+
+  if(upcomingToday.length > 0){
+    html += `<div class="live-section-label">Today's Upcoming Fixtures</div>`;
+    html += upcomingToday
+      .sort((a,b) => a.status.kickoffUTC - b.status.kickoffUTC)
+      .map(x => renderMatchCard(x.m, x.status)).join('');
+  }
+
+  if(finishedToday.length > 0){
+    html += `<div class="live-section-label">Today's Results</div>`;
+    html += finishedToday.map(x => renderMatchCard(x.m, x.status)).join('');
+  }
+
+  if(html === ''){
+    // Nothing today — show next match(es)
+    if(allUpcoming.length > 0){
+      const nextDate = allUpcoming[0].m.date;
+      const nextBatch = allUpcoming.filter(x => x.m.date === nextDate);
+      const d = new Date(nextDate).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+      html += `<div class="live-section-label">Next Matches · ${d}</div>`;
+      html += nextBatch.map(x => renderMatchCard(x.m, x.status)).join('');
+    } else {
+      html = `<div class="no-match-today"><strong>No fixtures found</strong>Check back when the tournament is underway.</div>`;
+    }
+  }
+
+  document.getElementById('liveWrap').innerHTML = html;
+  if(window._parseTwemoji) window._parseTwemoji(document.getElementById('liveWrap'));
 }
 
 // ── STANDINGS ──────────────────────────────────────────────────────────────
@@ -497,7 +768,7 @@ function buildBracket(){
 }
 
 function buildFallback(){
-  ['lbWrap','groupsWrap','bracketWrap'].forEach(id=>{
+  ['liveWrap','lbWrap','groupsWrap','bracketWrap'].forEach(id=>{
     const el=document.getElementById(id);
     if(el)el.innerHTML='<div class="error-wrap">Could not load live data — the tournament feed may be briefly unavailable. <a href="javascript:fetchData()" style="color:inherit;text-decoration:underline">Retry</a></div>';
   });
@@ -506,12 +777,18 @@ function buildFallback(){
 function showTab(id){
   document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
   document.getElementById('tab-'+id).classList.add('active');
-  // sync active state across both top tabs and bottom nav
   document.querySelectorAll('.nav-link,.bottom-nav-item').forEach(b=>{
     b.classList.toggle('active', b.dataset.tab===id);
   });
-  // jump back to top of the new section
   window.scrollTo({top:0,behavior:'smooth'});
+  // Re-apply Twemoji on Android after tab switch reveals new content
+  if(window.twemoji){
+    twemoji.parse(document.getElementById('tab-'+id),{
+      folder:'svg',ext:'.svg',
+      base:'https://cdn.jsdelivr.net/npm/twemoji@14.0.2/assets/',
+      className:'twemoji-flag'
+    });
+  }
 }
 
 buildDraw(); buildPots(); fetchData();
