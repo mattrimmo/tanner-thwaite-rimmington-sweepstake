@@ -27,6 +27,16 @@ nav{position:sticky;top:0;z-index:100;background:rgba(15,18,16,0.95);backdrop-fi
 .nav-link:hover{color:var(--white)}
 .nav-link.active{color:var(--gold);border-bottom-color:var(--gold)}
 .nav-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+
+/* BOTTOM NAV (mobile) */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:rgba(15,18,16,0.97);backdrop-filter:blur(16px);border-top:1px solid var(--border2);padding-bottom:env(safe-area-inset-bottom,0)}
+.bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 2px 6px;background:none;border:none;cursor:pointer;color:var(--muted2);transition:color .15s;position:relative}
+.bottom-nav-item .bn-icon{font-size:19px;line-height:1;filter:grayscale(0.4) opacity(0.7);transition:filter .15s}
+.bottom-nav-item .bn-label{font-size:10px;font-weight:500;letter-spacing:.01em}
+.bottom-nav-item.active{color:var(--gold)}
+.bottom-nav-item.active .bn-icon{filter:none}
+.bottom-nav-item.active::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:28px;height:2px;background:var(--gold);border-radius:0 0 2px 2px}
+.bottom-nav-item:active{transform:scale(0.92)}
 .live-dot{width:7px;height:7px;border-radius:50%;background:#ef4444;animation:pulse 1.5s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .live-label{font-size:11px;color:#ef4444;font-weight:500}
@@ -126,8 +136,22 @@ section.active{display:block}
   .groups-grid,.draw-grid{grid-template-columns:1fr}
   .bracket{min-width:720px}
   .lb-pts{font-size:16px}
+  /* swap top tabs for bottom bar */
+  .nav-links{display:none}
+  .bottom-nav{display:flex}
+  body{padding-bottom:64px}
+  nav{justify-content:space-between}
+  .nav-brand{margin-right:0}
+  section{padding:1.5rem 1rem 2rem}
+  /* tighter leaderboard on small screens */
+  .lb-table td{padding:9px 6px}
+  .lb-team-chip{font-size:10px;padding:2px 6px}
+  /* group tables: trim padding so 8 cols fit */
+  .group-table th,.group-table td{padding:6px 5px;font-size:11.5px}
+  .group-table th:first-child,.group-table td:first-child{padding-left:10px}
+  .owner-tag{display:block;margin-top:1px}
 }
-@media print{nav,section:not(.active){display:none}body{background:#fff;color:#111}.hero{background:#1a4a2e!important;-webkit-print-color-adjust:exact}}
+@media print{nav,.bottom-nav,section:not(.active){display:none}body{background:#fff;color:#111;padding-bottom:0}.hero{background:#1a4a2e!important;-webkit-print-color-adjust:exact}}
 </style>
 </head>
 <body>
@@ -141,17 +165,35 @@ section.active{display:block}
 <nav>
   <span class="nav-brand">⚽ WC2026</span>
   <div class="nav-links">
-    <button class="nav-link active" onclick="showTab('draw',this)">The Draw</button>
-    <button class="nav-link" onclick="showTab('leaderboard',this)">Leaderboard</button>
-    <button class="nav-link" onclick="showTab('pots',this)">Pots</button>
-    <button class="nav-link" onclick="showTab('groups',this)">Group Stage</button>
-    <button class="nav-link" onclick="showTab('bracket',this)">Bracket</button>
+    <button class="nav-link active" data-tab="draw" onclick="showTab('draw')">The Draw</button>
+    <button class="nav-link" data-tab="leaderboard" onclick="showTab('leaderboard')">Leaderboard</button>
+    <button class="nav-link" data-tab="pots" onclick="showTab('pots')">Pots</button>
+    <button class="nav-link" data-tab="groups" onclick="showTab('groups')">Group Stage</button>
+    <button class="nav-link" data-tab="bracket" onclick="showTab('bracket')">Bracket</button>
   </div>
   <div class="nav-right">
     <span class="live-dot"></span><span class="live-label">Live</span>
     <span class="last-updated" id="lastUpdated"></span>
   </div>
 </nav>
+
+<div class="bottom-nav">
+  <button class="bottom-nav-item active" data-tab="draw" onclick="showTab('draw')">
+    <span class="bn-icon">🎟️</span><span class="bn-label">Draw</span>
+  </button>
+  <button class="bottom-nav-item" data-tab="leaderboard" onclick="showTab('leaderboard')">
+    <span class="bn-icon">🏆</span><span class="bn-label">Leaders</span>
+  </button>
+  <button class="bottom-nav-item" data-tab="pots" onclick="showTab('pots')">
+    <span class="bn-icon">⚽</span><span class="bn-label">Pots</span>
+  </button>
+  <button class="bottom-nav-item" data-tab="groups" onclick="showTab('groups')">
+    <span class="bn-icon">📊</span><span class="bn-label">Groups</span>
+  </button>
+  <button class="bottom-nav-item" data-tab="bracket" onclick="showTab('bracket')">
+    <span class="bn-icon">🏟️</span><span class="bn-label">Bracket</span>
+  </button>
+</div>
 
 <section id="tab-draw" class="active">
   <div class="sec-title">The Draw</div>
@@ -461,11 +503,15 @@ function buildFallback(){
   });
 }
 
-function showTab(id,btn){
+function showTab(id){
   document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
-  document.querySelectorAll('.nav-link').forEach(b=>b.classList.remove('active'));
   document.getElementById('tab-'+id).classList.add('active');
-  btn.classList.add('active');
+  // sync active state across both top tabs and bottom nav
+  document.querySelectorAll('.nav-link,.bottom-nav-item').forEach(b=>{
+    b.classList.toggle('active', b.dataset.tab===id);
+  });
+  // jump back to top of the new section
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 buildDraw(); buildPots(); fetchData();
