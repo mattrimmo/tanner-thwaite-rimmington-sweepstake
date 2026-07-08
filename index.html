@@ -433,8 +433,12 @@ function renderMatchCard(m, status){
   const t1 = m.team1, t2 = m.team2;
   const clash = getClash(t1, t2);
   const sc = m.score;
+  // For finished matches, show the after-extra-time score when applicable; live uses ft
+  const finalScore = sc ? (sc.et || sc.ft) : [null, null];
   const [g1, g2] = sc ? sc.ft : [null, null];
+  const [f1, f2] = finalScore;
   const ht = sc && sc.ht ? `HT: ${sc.ht[0]}–${sc.ht[1]}` : '';
+  const koNote = sc ? (sc.p ? (sc.et ? `a.e.t. · pens ${sc.p[0]}–${sc.p[1]}` : `pens ${sc.p[0]}–${sc.p[1]}`) : (sc.et ? 'a.e.t.' : '')) : '';
 
   // Status badge
   let statusHtml, scoreHtml, cardClass='';
@@ -445,7 +449,7 @@ function renderMatchCard(m, status){
     cardClass = 'is-live';
   } else if(status.state === 'finished'){
     statusHtml = `<span class="lmc-status finished">Full Time</span>`;
-    scoreHtml = `<div class="lmc-score">${g1}–${g2}</div>${ht?`<div class="lmc-ht">${ht}</div>`:''}`;
+    scoreHtml = `<div class="lmc-score">${f1}–${f2}</div>${koNote?`<div class="lmc-ht">${koNote}</div>`:(ht?`<div class="lmc-ht">${ht}</div>`:'')}`;
     cardClass = 'is-finished';
   } else {
     const localTime = formatKickoff(m.date, m.time);
@@ -662,20 +666,52 @@ function simGroup(matches){
   return arr.sort((a,b)=>pts[b]-pts[a]||gd[b]-gd[a]||Math.random()-.5);
 }
 function runMonteCarlo(matches,N=8000){
+  resolveBracket(matches);
   const wins={};Object.keys(FIFA_RANK).forEach(t=>wins[t]=0);
   const byGroup={};GROUP_ORDER.forEach(g=>byGroup[g]=[]);
   matches.forEach(m=>{if(m.group){const g=m.group.replace('Group ','');if(byGroup[g])byGroup[g].push(m);}});
+  const groupMatches=matches.filter(m=>m.group);
+  const groupsDone=groupMatches.length>0 && groupMatches.every(m=>m.score);
+  const byNum={};matches.forEach(m=>{if(m.num!=null)byNum[m.num]=m;});
+  const finalMatch=matches.find(m=>m.round==='Final');
+  const finalNum=finalMatch?finalMatch.num:104;
+  const isCode=v=>typeof v==='string'&&/^[WL]\d+$/.test(v);
+  // Winner index of a decided knockout match: pens → ET → FT
+  function actualWinIdx(s){
+    if(s.p) return s.p[0]>=s.p[1]?0:1;
+    if(s.et) return s.et[0]>=s.et[1]?0:1;
+    return s.ft[0]>=s.ft[1]?0:1;
+  }
+  // Simulate the real bracket once (respecting decided matches); returns champion
+  let memo;
+  function winOf(num){
+    if(memo[num]) return memo[num];
+    const m=byNum[num];
+    const t1=isCode(m.team1)?refOf(m.team1):m.team1;
+    const t2=isCode(m.team2)?refOf(m.team2):m.team2;
+    let w;
+    if(m.score){ w = actualWinIdx(m.score)===0 ? t1 : t2; }
+    else { w = simMatch(t1,t2); }
+    memo[num]={w, l:(w===t1?t2:t1)};
+    return memo[num];
+  }
+  function refOf(ref){ const r=winOf(parseInt(ref.slice(1),10)); return ref[0]==='W'?r.w:r.l; }
+
   for(let i=0;i<N;i++){
-    const winners=[],runners=[],thirds=[];
-    GROUP_ORDER.forEach(g=>{const s=simGroup(byGroup[g]);winners.push(s[0]);runners.push(s[1]);thirds.push(s[2]);});
-    const bestThirds=thirds.sort((a,b)=>simStrength(b)-simStrength(a)).slice(0,8);
-    let round=[...winners,...runners,...bestThirds];
-    while(round.length>1){
-      const next=[];
-      for(let j=0;j<round.length;j+=2)next.push(simMatch(round[j],round[j+1]));
-      round=next;
+    let champ;
+    if(groupsDone){
+      memo={};
+      champ = winOf(finalNum).w;   // walk the real knockout tree
+    } else {
+      // Group stage still under way — simulate from groups (uses played results)
+      const winners=[],runners=[],thirds=[];
+      GROUP_ORDER.forEach(g=>{const s=simGroup(byGroup[g]);winners.push(s[0]);runners.push(s[1]);thirds.push(s[2]);});
+      const bestThirds=thirds.sort((a,b)=>simStrength(b)-simStrength(a)).slice(0,8);
+      let round=[...winners,...runners,...bestThirds];
+      while(round.length>1){const next=[];for(let j=0;j<round.length;j+=2)next.push(simMatch(round[j],round[j+1]));round=next;}
+      champ=round[0];
     }
-    const champ=canon(round[0]);
+    champ=canon(champ);
     if(champ&&wins[champ]!==undefined)wins[champ]++;
   }
   const pct={};Object.keys(wins).forEach(t=>pct[t]=wins[t]/N*100);
@@ -804,7 +840,13 @@ function buildBracket(){
     const w=matchWinner(m), w1=w&&w===t1, w2=w&&w===t2;
     const sc=m.score;
     let s1='',s2='',note='';
-    if(sc){ const ft=sc.ft||[null,null]; s1=ft[0]; s2=ft[1]; if(sc.p)note=`pens ${sc.p[0]}–${sc.p[1]}`; else if(sc.et)note='a.e.t.'; }
+    if(sc){
+      // Show the score after extra time when a match went to ET; otherwise full time
+      const final = sc.et || sc.ft || [null,null];
+      s1=final[0]; s2=final[1];
+      if(sc.p){ note = sc.et ? `a.e.t. · pens ${sc.p[0]}–${sc.p[1]}` : `pens ${sc.p[0]}–${sc.p[1]}`; }
+      else if(sc.et){ note='a.e.t.'; }
+    }
     return `<div class="b-match">
       <div class="b-team ${w1?'winner':''} ${tbd1?'tbd':''}"><span class="b-team-flag">${tbd1?'':getFlag(t1)}</span><span class="b-team-name">${tbd1?plabel(t1):t1}</span><span class="b-team-score">${sc?s1:''}</span></div>
       <div class="b-team ${w2?'winner':''} ${tbd2?'tbd':''}"><span class="b-team-flag">${tbd2?'':getFlag(t2)}</span><span class="b-team-name">${tbd2?plabel(t2):t2}</span><span class="b-team-score">${sc?s2:''}</span></div>
